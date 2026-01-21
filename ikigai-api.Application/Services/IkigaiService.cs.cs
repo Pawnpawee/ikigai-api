@@ -23,6 +23,11 @@ public class IkigaiService : IIkigaiService
 
     public async Task<Guid> SavePrologueAsync(SavePrologueRequest request)
     {
+        if (request.PlayerName.Length > 20)
+        {
+            throw new ArgumentException("Player name must be less than 20 characters.");
+        }
+        
         // 1. สร้าง User ใหม่
         var newUser = new User
         {
@@ -37,7 +42,7 @@ public class IkigaiService : IIkigaiService
         {
             Id = Guid.NewGuid(),
             UserId = newUser.Id,
-            // แปลง List<int> เป็น JSON String "[1,4,5]"
+            // แปลงเป็น JSON String
             SelectedReasons = JsonSerializer.Serialize(request.SelectedReasons),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -68,7 +73,6 @@ public class IkigaiService : IIkigaiService
             CustomHobbies = JsonSerializer.Serialize(request.CustomHobbies),
             TopThreeHobbies = JsonSerializer.Serialize(request.TopThreeHobbies),
             DreamAnswer = request.DreamAnswer,
-            //? หมายเหตุ: ถ้าใน Entity ไม่มีที่เก็บ Score อาจต้องเพิ่ม Column "ScoresJson" หรือปล่อยผ่าน
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -77,22 +81,17 @@ public class IkigaiService : IIkigaiService
         await _loveRepo.SaveChangesAsync();
     }
 
-    Task<Guid> IIkigaiService.SaveLoveSessionAsync(SaveLoveSessionRequest request)
+    public async Task SaveSkillSessionAsync(SaveSkillSessionRequest request)
     {
         throw new NotImplementedException();
     }
 
-    public Task<Guid> SaveSkillSessionAsync(SaveSkillSessionRequest request)
+    public async Task SaveWorldSessionAsync(SaveWorldSessionRequest request)
     {
         throw new NotImplementedException();
     }
 
-    public Task<Guid> SaveWorldSessionAsync(SaveWorldSessionRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Guid> SavePaidSessionAsync(SavePaidSessionRequest request)
+    public async Task SavePaidSessionAsync(SavePaidSessionRequest request)
     {
         throw new NotImplementedException();
     }
