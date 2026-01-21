@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ikigai-api.API/ikigai-api.API.csproj" />
+  <Project Path="ikigai-api.Application/ikigai-api.Application.csproj" />
+  <Project Path="ikigai-api.Domain/ikigai-api.Domain.csproj" />
+  <Project Path="ikigai-api.Infrastructure/ikigai-api.Infrastructure.csproj" />
+</Solution>
