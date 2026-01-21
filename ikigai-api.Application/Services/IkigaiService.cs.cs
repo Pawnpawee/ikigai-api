@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ikigai_api.Application.DTOs;
 using ikigai_api.Application.Interfaces;
+using ikigai_api.Common.Extensions;
 using ikigai_api.Domain.Entities;
 using ikigai_api.Domain.Interfaces;
 
@@ -27,14 +28,14 @@ public class IkigaiService : IIkigaiService
         {
             throw new ArgumentException("Player name must be less than 20 characters.");
         }
-        
+
         // 1. สร้าง User ใหม่
         var newUser = new User
         {
             Id = Guid.NewGuid(),
             PlayerName = request.PlayerName,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow.ToThaiTime(),
+            UpdatedAt = DateTime.UtcNow.ToThaiTime()
         };
 
         // 2. สร้าง Prologue Data
@@ -43,9 +44,9 @@ public class IkigaiService : IIkigaiService
             Id = Guid.NewGuid(),
             UserId = newUser.Id,
             // แปลงเป็น JSON String
-            SelectedReasons = JsonSerializer.Serialize(request.SelectedReasons),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            SelectedReasons = request.SelectedReasons.ToJsonThai(),
+            CreatedAt = DateTime.UtcNow.ToThaiTime(),
+            UpdatedAt = DateTime.UtcNow.ToThaiTime()
         };
 
         // 3. บันทึกลง DB
@@ -69,12 +70,12 @@ public class IkigaiService : IIkigaiService
         {
             Id = Guid.NewGuid(),
             UserId = request.UserId,
-            SelectedHobbies = JsonSerializer.Serialize(request.SelectedHobbies),
-            CustomHobbies = JsonSerializer.Serialize(request.CustomHobbies),
-            TopThreeHobbies = JsonSerializer.Serialize(request.TopThreeHobbies),
+            SelectedHobbies = request.SelectedHobbies.ToJsonThai(),
+            CustomHobbies = request.CustomHobbies.ToJsonThai(),
+            TopThreeHobbies = request.TopThreeHobbies.ToJsonThai(),
             DreamAnswer = request.DreamAnswer,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow.ToThaiTime(),
+            UpdatedAt = DateTime.UtcNow.ToThaiTime()
         };
 
         await _loveRepo.AddAsync(loveData);
