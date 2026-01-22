@@ -11,22 +11,31 @@ public class IkigaiService : IIkigaiService
     private readonly IGenericRepository<User> _userRepo;
     private readonly IGenericRepository<PrologueData> _prologueRepo;
     private readonly IGenericRepository<LoveSessionData> _loveRepo;
+    private readonly IGenericRepository<SkillSessionData> _skillRepo;
+    private readonly IGenericRepository<WorldSessionData> _worldRepo;
+    private readonly IGenericRepository<PaidSessionData> _paidRepo;
 
     public IkigaiService(
         IGenericRepository<User> userRepo,
         IGenericRepository<PrologueData> prologueRepo,
-        IGenericRepository<LoveSessionData> loveRepo)
+        IGenericRepository<LoveSessionData> loveRepo,
+        IGenericRepository<SkillSessionData> skillRepo,
+        IGenericRepository<WorldSessionData> worldRepo,
+        IGenericRepository<PaidSessionData> paidRepo)
     {
         _userRepo = userRepo;
         _prologueRepo = prologueRepo;
         _loveRepo = loveRepo;
+        _skillRepo = skillRepo;
+        _worldRepo = worldRepo;
+        _paidRepo = paidRepo;
     }
 
     public async Task<Guid> SavePrologueAsync(SavePrologueRequest request)
     {
-        if (request.PlayerName.Length > 20)
+        if (string.IsNullOrWhiteSpace(request.PlayerName) || request.PlayerName.Length > 20)
         {
-            throw new ArgumentException("Player name must be less than 20 characters.");
+            throw new ArgumentException("Player name is required and must be 20 characters or less.");
         }
 
         // 1. สร้าง User ใหม่
@@ -43,7 +52,6 @@ public class IkigaiService : IIkigaiService
         {
             Id = Guid.NewGuid(),
             UserId = newUser.Id,
-            // แปลงเป็น JSON String
             SelectedReasons = request.SelectedReasons.ToJsonThai(),
             CreatedAt = DateTime.UtcNow.ToThaiTime(),
             UpdatedAt = DateTime.UtcNow.ToThaiTime()
@@ -60,6 +68,10 @@ public class IkigaiService : IIkigaiService
 
     public async Task SaveLoveSessionAsync(SaveLoveSessionRequest request)
     {
+        if (request.UserId == Guid.Empty)
+        {
+            throw new ArgumentException("User ID is required.");
+        }
         // Validation: ตรวจสอบว่ามี 3 อันจริงไหม
         if (request.TopThreeHobbies.Count != 3)
         {
@@ -84,16 +96,95 @@ public class IkigaiService : IIkigaiService
 
     public async Task SaveSkillSessionAsync(SaveSkillSessionRequest request)
     {
-        throw new NotImplementedException();
+        if (request.UserId == Guid.Empty)
+        {
+            throw new ArgumentException("User ID is required.");
+        }
+
+        var hardSkills = request.SelectedHardSkills
+            .Concat(request.CustomHardSkills)
+            .ToList();
+
+        var softSkills = request.SelectedSoftSkills
+            .Concat(request.CustomSoftSkills)
+            .ToList();
+
+        if (hardSkills.Count < 2 || softSkills.Count < 3)
+        {
+            throw new ArgumentException("You must select at least two hard skills and at least three soft skills.");
+        }
+
+        var skillData = new SkillSessionData
+        {
+            Id = Guid.NewGuid(),
+            UserId = request.UserId,
+            SelectedHardSkills = hardSkills.ToJsonThai(),
+            CustomHardSkills = request.CustomHardSkills.ToJsonThai(),
+            SelectedSoftSkills = softSkills.ToJsonThai(),
+            CustomSoftSkills = request.CustomSoftSkills.ToJsonThai(),
+            SkillsMatchJob = request.SkillsMatchJob,
+            UseSkillsInNewRole = request.UseSkillsInNewRole,
+            CreatedAt = DateTime.UtcNow.ToThaiTime(),
+            UpdatedAt = DateTime.UtcNow.ToThaiTime()
+        };
+
+        await _skillRepo.AddAsync(skillData);
+        await _skillRepo.SaveChangesAsync();
     }
 
     public async Task SaveWorldSessionAsync(SaveWorldSessionRequest request)
     {
-        throw new NotImplementedException();
+        if (request.UserId == Guid.Empty)
+        {
+            throw new ArgumentException("User ID is required.");
+        }
+
+        if (!request.SelectedGifts.Any())
+        {
+            throw new ArgumentException("At least one gift must be selected.");
+        }
+
+        var worldData = new WorldSessionData
+        {
+            Id = Guid.NewGuid(),
+            UserId = request.UserId,
+            CalledUponAnswer = request.CalledUponAnswer.ToJsonThai(),
+            SelectedGifts = request.SelectedGifts.ToJsonThai(),
+            NoManualChoice = request.NoManualChoice,
+            MismatchChoice = request.MismatchChoice,
+            FutureValueAnswer = request.FutureValueAnswer,
+            CreatedAt = DateTime.UtcNow.ToThaiTime(),
+            UpdatedAt = DateTime.UtcNow.ToThaiTime()
+        };
+
+        await _worldRepo.AddAsync(worldData);
+        await _worldRepo.SaveChangesAsync();
     }
 
     public async Task SavePaidSessionAsync(SavePaidSessionRequest request)
     {
-        throw new NotImplementedException();
+        if (request.UserId == Guid.Empty)
+        {
+            throw new ArgumentException("User ID is required.");
+        }
+
+        if (!request.SelectedJobCards.Any())
+        {
+            throw new ArgumentException("At least one career must be selected.");
+        }
+
+        var paidData = new PaidSessionData
+        {
+            Id = Guid.NewGuid(),
+            UserId = request.UserId,
+            EverPaidAnswer = request.EverPaidAnswer,
+            SelectedJobCards = request.SelectedJobCards.ToJsonThai(),
+            MonetizableExperience = request.MonetizableExperience,
+            CreatedAt = DateTime.UtcNow.ToThaiTime(),
+            UpdatedAt = DateTime.UtcNow.ToThaiTime()
+        };
+
+        await _paidRepo.AddAsync(paidData);
+        await _paidRepo.SaveChangesAsync();
     }
 }

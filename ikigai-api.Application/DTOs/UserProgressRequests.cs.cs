@@ -43,6 +43,6 @@ namespace ikigai_api.Application.DTOs
         public Guid UserId { get; set; }
         public string EverPaidAnswer { get; set; } = string.Empty; // yes, no
         public List<string> SelectedJobCards { get; set; } = new();
-        public List<string> MonetizableExperience { get; set; } = new();
+        public string MonetizableExperience { get; set; } = string.Empty;
     }
 }
