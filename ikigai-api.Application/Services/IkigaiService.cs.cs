@@ -136,7 +136,7 @@ public class IkigaiService : IIkigaiService
     {
         if (request.UserId == Guid.Empty)
         {
-            throw new ArgumentException("Invalid User ID.");
+            throw new ArgumentException("User ID is required.");
         }
 
         if (!request.SelectedGifts.Any())
@@ -165,7 +165,7 @@ public class IkigaiService : IIkigaiService
     {
         if (request.UserId == Guid.Empty)
         {
-            throw new ArgumentException("Invalid User ID.");
+            throw new ArgumentException("User ID is required.");
         }
 
         if (!request.SelectedJobCards.Any())

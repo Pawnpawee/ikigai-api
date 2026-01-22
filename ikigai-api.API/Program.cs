@@ -60,7 +60,7 @@ else
 {
     // In production, explicitly specify allowed origins and allow credentials only for those.
     app.UseCors(x => x
-    .WithOrigins(allowedOrigins)
+        .WithOrigins(allowedOrigins)
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowCredentials());
