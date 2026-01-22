@@ -3,6 +3,8 @@ using ikigai_api.Infrastructure.Persistence;
 using ikigai_api.Application.Interfaces;
 using ikigai_api.Domain.Interfaces;
 using ikigai_api.Infrastructure.Repositories;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     ));
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+.AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
+    });
 
 //? --- [จุดที่ 1] เพิ่ม Code ตรงนี้เพื่อลงทะเบียน Swagger ---
 builder.Services.AddEndpointsApiExplorer();
@@ -33,6 +39,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(x => x
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .SetIsOriginAllowed(origin => true)
+    .AllowCredentials());
 
 app.MapControllers();
 

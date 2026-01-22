@@ -4,7 +4,7 @@ namespace ikigai_api.Application.DTOs
     public class SavePrologueRequest
     {
         public string PlayerName { get; set; } = string.Empty;
-        public List<int> SelectedReasons { get; set; } = new();
+        public List<string> SelectedReasons { get; set; } = new();
     }
 
     // 2. Love Session Request
