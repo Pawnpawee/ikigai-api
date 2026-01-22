@@ -29,6 +29,8 @@ var allowedOrigins = builder.Configuration
     .GetSection("CorsSettings:AllowedOrigins")
     .Get<string[]>();
 
+var sanitizedOrigins = allowedOrigins?.Select(o => o.TrimEnd('/')).ToArray();
+
 if (allowedOrigins == null || allowedOrigins.Length == 0)
 {
     Console.WriteLine("Warning: No CORS origins configured!");
@@ -60,7 +62,7 @@ else
 {
     // In production, explicitly specify allowed origins and allow credentials only for those.
     app.UseCors(x => x
-        .WithOrigins(allowedOrigins)
+        .WithOrigins(sanitizedOrigins)
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowCredentials());
