@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ikigai_api.Application.DTOs;
 using ikigai_api.Application.Interfaces;
+using ikigai_api.Common.Extensions;
 using ikigai_api.Domain.Entities;
 using ikigai_api.Domain.Interfaces;
 
@@ -42,8 +43,8 @@ public class IkigaiService : IIkigaiService
         {
             Id = Guid.NewGuid(),
             PlayerName = request.PlayerName,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow.ToThaiTime(),
+            UpdatedAt = DateTime.UtcNow.ToThaiTime()
         };
 
         // 2. สร้าง Prologue Data
@@ -51,10 +52,9 @@ public class IkigaiService : IIkigaiService
         {
             Id = Guid.NewGuid(),
             UserId = newUser.Id,
-            // แปลง List<int> เป็น JSON String "[1,4,5]"
-            SelectedReasons = JsonSerializer.Serialize(request.SelectedReasons),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            SelectedReasons = request.SelectedReasons.ToJsonThai(),
+            CreatedAt = DateTime.UtcNow.ToThaiTime(),
+            UpdatedAt = DateTime.UtcNow.ToThaiTime()
         };
 
         // 3. บันทึกลง DB
@@ -82,13 +82,12 @@ public class IkigaiService : IIkigaiService
         {
             Id = Guid.NewGuid(),
             UserId = request.UserId,
-            SelectedHobbies = JsonSerializer.Serialize(request.SelectedHobbies),
-            CustomHobbies = JsonSerializer.Serialize(request.CustomHobbies),
-            TopThreeHobbies = JsonSerializer.Serialize(request.TopThreeHobbies),
+            SelectedHobbies = request.SelectedHobbies.ToJsonThai(),
+            CustomHobbies = request.CustomHobbies.ToJsonThai(),
+            TopThreeHobbies = request.TopThreeHobbies.ToJsonThai(),
             DreamAnswer = request.DreamAnswer,
-            //? หมายเหตุ: ถ้าใน Entity ไม่มีที่เก็บ Score อาจต้องเพิ่ม Column "ScoresJson" หรือปล่อยผ่าน
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow.ToThaiTime(),
+            UpdatedAt = DateTime.UtcNow.ToThaiTime()
         };
 
         await _loveRepo.AddAsync(loveData);
@@ -180,7 +179,7 @@ public class IkigaiService : IIkigaiService
             UserId = request.UserId,
             EverPaidAnswer = request.EverPaidAnswer,
             SelectedJobCards = request.SelectedJobCards.ToJsonThai(),
-            MonetizableExperience = request.MonetizableExperience.ToJsonThai(),
+            MonetizableExperience = request.MonetizableExperience,
             CreatedAt = DateTime.UtcNow.ToThaiTime(),
             UpdatedAt = DateTime.UtcNow.ToThaiTime()
         };

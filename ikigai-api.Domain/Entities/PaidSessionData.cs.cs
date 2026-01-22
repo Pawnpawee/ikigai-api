@@ -9,7 +9,7 @@ namespace ikigai_api.Domain.Entities
         //* กลุ่ม JSON Data
         public string EverPaidAnswer { get; set; } = string.Empty; // yes, no
         public string SelectedJobCards { get; set; } = "[]";
-        public string MonetizableExperience { get; set; } = "[]";
+        public string MonetizableExperience { get; set; } = string.Empty;
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
