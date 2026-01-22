@@ -33,7 +33,7 @@ public class IkigaiService : IIkigaiService
 
     public async Task<Guid> SavePrologueAsync(SavePrologueRequest request)
     {
-        if (!request.PlayerName.Any() || request.PlayerName.Length > 20)
+        if (string.IsNullOrWhiteSpace(request.PlayerName) || request.PlayerName.Length > 20)
         {
             throw new ArgumentException("Player name is required and must be 20 characters or less.");
         }
@@ -109,9 +109,9 @@ public class IkigaiService : IIkigaiService
             .Concat(request.CustomSoftSkills)
             .ToList();
 
-        if (hardSkills.Count < 2 && softSkills.Count < 3)
+        if (hardSkills.Count < 2 || softSkills.Count < 3)
         {
-            throw new ArgumentException("At least two hard skills and three soft skills must be selected or provided.");
+            throw new ArgumentException("You must select at least two hard skills and at least three soft skills.");
         }
 
         var skillData = new SkillSessionData
