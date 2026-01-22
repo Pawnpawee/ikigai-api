@@ -1,5 +1,3 @@
-
-
 namespace ikigai_api.Common.Extensions
 {
     public static class DateTimeExtensions

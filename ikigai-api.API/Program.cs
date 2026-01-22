@@ -16,11 +16,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     ));
 
 // Add services to the container.
-builder.Services.AddControllers()
-.AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
-    });
+builder.Services.AddControllers();
 
 //? --- [จุดที่ 1] เพิ่ม Code ตรงนี้เพื่อลงทะเบียน Swagger ---
 builder.Services.AddEndpointsApiExplorer();
@@ -28,6 +24,16 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IIkigaiService, IkigaiService>();
+
+var allowedOrigins = builder.Configuration
+    .GetSection("CorsSettings:AllowedOrigins")
+    .Get<string[]>();
+
+if (allowedOrigins == null || allowedOrigins.Length == 0)
+{
+    Console.WriteLine("Warning: No CORS origins configured!");
+    allowedOrigins = new string[] { };
+}
 
 var app = builder.Build();
 
@@ -40,11 +46,25 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors(x => x
-    .AllowAnyMethod()
-    .AllowAnyHeader()
-    .SetIsOriginAllowed(origin => true)
-    .AllowCredentials());
+
+
+if (app.Environment.IsDevelopment())
+{
+    // In development, allow any origin without credentials for easier testing.
+    app.UseCors(x => x
+        .AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader());
+}
+else
+{
+    // In production, explicitly specify allowed origins and allow credentials only for those.
+    app.UseCors(x => x
+        .WithOrigins(allowedOrigins)
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials());
+}
 
 app.MapControllers();
 

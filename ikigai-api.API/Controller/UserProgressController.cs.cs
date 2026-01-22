@@ -49,5 +49,59 @@ namespace MyThesis.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
+        [HttpPost("skill")]
+        public async Task<IActionResult> SaveSkillSession([FromBody] SaveSkillSessionRequest request)
+        {
+            try
+            {
+                await _ikigaiService.SaveSkillSessionAsync(request);
+                return Ok(new { message = "Skill session progress saved successfully." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        [HttpPost("world")]
+        public async Task<IActionResult> SaveWorldSession([FromBody] SaveWorldSessionRequest request)
+        {
+            try
+            {
+                await _ikigaiService.SaveWorldSessionAsync(request);
+                return Ok(new { message = "World session progress saved successfully." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        [HttpPost("paid")]
+        public async Task<IActionResult> SavePaidSession([FromBody] SavePaidSessionRequest request)
+        {
+            try
+            {
+                await _ikigaiService.SavePaidSessionAsync(request);
+                return Ok(new { message = "Paid session progress saved successfully." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
     }
 }
