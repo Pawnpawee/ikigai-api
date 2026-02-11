@@ -22,8 +22,4 @@
     <ProjectReference Include="..\ikigai-api.Infrastructure\ikigai-api.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controller\" />
-  </ItemGroup>
-
 </Project>
