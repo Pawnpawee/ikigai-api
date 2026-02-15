@@ -23,17 +23,7 @@ namespace ikigai_api.Domain.Entities
         
         public string StrengthsJson { get; set; } = "[]";
         public string DevelopmentPointsJson { get; set; } = "[]";
-        
-        public virtual DetailedComponentData? DetailedComponentData { get; set; }
     }
     
-    public class DetailedComponentData
-    {
-         public Guid Id { get; set; } // DetailedComponentDataId
-         
-         public Guid IkigaiSummaryId { get; set; }
-         public virtual IkigaiSummary? IkigaiSummary { get; set; }
-
-         public string DetailsJson { get; set; } = "{}";
-    }
+    
 }

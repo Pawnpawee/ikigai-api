@@ -12,8 +12,8 @@ using ikigai_api.Infrastructure.Persistence;
 namespace ikigai_api.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260120204820_InitialCreatePostgres")]
-    partial class InitialCreatePostgres
+    [Migration("20260211172648_initialize")]
+    partial class initialize
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,27 +24,6 @@ namespace ikigai_api.API.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("ikigai_api.Domain.Entities.DetailedComponentData", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("DetailsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("IkigaiSummaryId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IkigaiSummaryId")
-                        .IsUnique();
-
-                    b.ToTable("DetailedComponentDatas");
-                });
 
             modelBuilder.Entity("ikigai_api.Domain.Entities.IkigaiResult", b =>
                 {
@@ -304,17 +283,6 @@ namespace ikigai_api.API.Migrations
                     b.ToTable("WorldSessionDatas");
                 });
 
-            modelBuilder.Entity("ikigai_api.Domain.Entities.DetailedComponentData", b =>
-                {
-                    b.HasOne("ikigai_api.Domain.Entities.IkigaiSummary", "IkigaiSummary")
-                        .WithOne("DetailedComponentData")
-                        .HasForeignKey("ikigai_api.Domain.Entities.DetailedComponentData", "IkigaiSummaryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("IkigaiSummary");
-                });
-
             modelBuilder.Entity("ikigai_api.Domain.Entities.IkigaiResult", b =>
                 {
                     b.HasOne("ikigai_api.Domain.Entities.User", "User")
@@ -395,11 +363,6 @@ namespace ikigai_api.API.Migrations
             modelBuilder.Entity("ikigai_api.Domain.Entities.IkigaiResult", b =>
                 {
                     b.Navigation("IkigaiSummaries");
-                });
-
-            modelBuilder.Entity("ikigai_api.Domain.Entities.IkigaiSummary", b =>
-                {
-                    b.Navigation("DetailedComponentData");
                 });
 
             modelBuilder.Entity("ikigai_api.Domain.Entities.User", b =>

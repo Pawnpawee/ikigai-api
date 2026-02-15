@@ -23,7 +23,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<IIkigaiService, IkigaiService>();
+builder.Services.AddScoped<IIkigaiResultRepository, IkigaiResultRepository>();
+builder.Services.AddHttpClient<IIkigaiService, IkigaiService>((serviceProvider, client) =>
+{
+    var config = serviceProvider.GetRequiredService<IConfiguration>();
+    var apiKey = config["N8nIntegration:ApiKey"];
+    if (!string.IsNullOrEmpty(apiKey))
+    {
+        client.DefaultRequestHeaders.Add("x-api-key", apiKey);
+    }
+});
 
 var allowedOrigins = builder.Configuration
     .GetSection("CorsSettings:AllowedOrigins")

@@ -18,7 +18,6 @@ namespace ikigai_api.Infrastructure.Persistence
         public DbSet<PaidSessionData> PaidSessionDatas { get; set; }
         public DbSet<IkigaiResult> IkigaiResults { get; set; }
         public DbSet<IkigaiSummary> IkigaiSummaries { get; set; }
-        public DbSet<DetailedComponentData> DetailedComponentDatas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -63,11 +62,6 @@ namespace ikigai_api.Infrastructure.Persistence
                 .WithOne(s => s.Result)
                 .HasForeignKey(s => s.ResultId);
 
-             // IkigaiSummary 1 : 0..1 DetailedComponentData (One-to-One)
-             modelBuilder.Entity<DetailedComponentData>()
-                .HasOne(d => d.IkigaiSummary)
-                .WithOne(s => s.DetailedComponentData)
-                .HasForeignKey<DetailedComponentData>(d => d.IkigaiSummaryId);
         }
     }
 }

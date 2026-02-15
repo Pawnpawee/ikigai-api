@@ -6,20 +6,18 @@ namespace ikigai_api.Domain.Interfaces
     {
         // ดึงข้อมูลทั้งหมด
         Task<IReadOnlyList<T>> GetAllAsync();
-
         // ดึงข้อมูลตามเงื่อนไข
         Task<T?> GetByIdAsync(Guid id);
-
         // เพิ่มข้อมูล
         Task AddAsync(T entity);
-
         // แก้ไข
         void Update(T entity);
-
         // ลบ
         void Delete(T entity);
-
         // บันทึกลง Database (Save Changes)
         Task<int> SaveChangesAsync();
+        // หาตามเงื่อนไข
+        Task<T?> FindAsync(Expression<Func<T, bool>> predicate);
+        Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> predicate);
     }
 }
