@@ -30,10 +30,14 @@ namespace ikigai_api.Infrastructure.Repositories
         {
             await _dbSet.AddAsync(entity);
         }
+        public async Task AddRangeAsync(IEnumerable<T> entities)
+        {
+            await _dbSet.AddRangeAsync(entities);
+        }
 
         public void Update(T entity)
         {
-            _context.Entry(entity).State = EntityState.Modified;
+            _context.Set<T>().Update(entity);
         }
 
         public void Delete(T entity)

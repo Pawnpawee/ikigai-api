@@ -13,10 +13,17 @@ public class IkigaiResultRepository : GenericRepository<IkigaiResult>, IIkigaiRe
         _context = context;
     }
 
-    public async Task<IkigaiResult?> GetResultWithDetailsAsync(Guid userId)
+    public async Task<IkigaiResult?> GetResultWithDetailsAsync(Guid processId) 
     {
         return await _context.Set<IkigaiResult>()
             .Include(x => x.IkigaiSummaries)
-            .FirstOrDefaultAsync(x => x.UserId == userId);
+            .FirstOrDefaultAsync(x => x.Id == processId);
+    }
+
+    public async Task<IkigaiResult?> GetByIdWithDetailsAsync(Guid id)
+    {
+        return await _context.Set<IkigaiResult>()
+            .Include(x => x.IkigaiSummaries) 
+            .FirstOrDefaultAsync(x => x.Id == id);
     }
 }

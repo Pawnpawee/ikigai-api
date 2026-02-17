@@ -10,6 +10,7 @@ namespace ikigai_api.Domain.Interfaces
         Task<T?> GetByIdAsync(Guid id);
         // เพิ่มข้อมูล
         Task AddAsync(T entity);
+        Task AddRangeAsync(IEnumerable<T> entities);
         // แก้ไข
         void Update(T entity);
         // ลบ
@@ -19,5 +20,6 @@ namespace ikigai_api.Domain.Interfaces
         // หาตามเงื่อนไข
         Task<T?> FindAsync(Expression<Func<T, bool>> predicate);
         Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> predicate);
+        
     }
 }

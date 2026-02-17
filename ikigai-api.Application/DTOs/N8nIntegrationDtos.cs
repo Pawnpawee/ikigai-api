@@ -139,6 +139,9 @@ namespace ikigai_api.Application.DTOs
         [JsonPropertyName("overall_summary")]
         public string OverallSummary { get; set; } = string.Empty;
 
+        [JsonPropertyName("short_summary")]
+        public string? ShortSummary { get; set; }
+
         [JsonPropertyName("strengths")]
         public List<string> Strengths { get; set; } = new();
 

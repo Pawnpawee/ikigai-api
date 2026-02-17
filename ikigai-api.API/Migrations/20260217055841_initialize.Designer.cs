@@ -12,7 +12,7 @@ using ikigai_api.Infrastructure.Persistence;
 namespace ikigai_api.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260211172648_initialize")]
+    [Migration("20260217055841_initialize")]
     partial class initialize
     {
         /// <inheritdoc />
@@ -31,8 +31,14 @@ namespace ikigai_api.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("GeneratedAt")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");

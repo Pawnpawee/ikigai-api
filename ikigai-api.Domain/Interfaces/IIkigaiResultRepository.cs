@@ -5,4 +5,5 @@ using ikigai_api.Domain.Interfaces;
 public interface IIkigaiResultRepository : IGenericRepository<IkigaiResult>
 {
     Task<IkigaiResult?> GetResultWithDetailsAsync(Guid userId);
+    Task<IkigaiResult?> GetByIdWithDetailsAsync(Guid id);
 }
