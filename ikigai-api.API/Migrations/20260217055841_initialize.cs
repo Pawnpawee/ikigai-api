@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ikigai_api.API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreatePostgres : Migration
+    public partial class initialize : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -31,6 +31,8 @@ namespace ikigai_api.API.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    ErrorMessage = table.Column<string>(type: "text", nullable: true),
                     GeneratedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
@@ -185,31 +187,6 @@ namespace ikigai_api.API.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "DetailedComponentDatas",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    IkigaiSummaryId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DetailsJson = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DetailedComponentDatas", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DetailedComponentDatas_IkigaiSummaries_IkigaiSummaryId",
-                        column: x => x.IkigaiSummaryId,
-                        principalTable: "IkigaiSummaries",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DetailedComponentDatas_IkigaiSummaryId",
-                table: "DetailedComponentDatas",
-                column: "IkigaiSummaryId",
-                unique: true);
-
             migrationBuilder.CreateIndex(
                 name: "IX_IkigaiResults_UserId",
                 table: "IkigaiResults",
@@ -250,7 +227,7 @@ namespace ikigai_api.API.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "DetailedComponentDatas");
+                name: "IkigaiSummaries");
 
             migrationBuilder.DropTable(
                 name: "LoveSessionDatas");
@@ -266,9 +243,6 @@ namespace ikigai_api.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "WorldSessionDatas");
-
-            migrationBuilder.DropTable(
-                name: "IkigaiSummaries");
 
             migrationBuilder.DropTable(
                 name: "IkigaiResults");

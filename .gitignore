@@ -21,6 +21,7 @@ obj/
 //* ส่วนนี้สำคัญที่สุด ห้ามนำไฟล์ที่มี Connection String หรือ Password ขึ้นเด็ดขาด
 //* ----------------------------------------------------------------------
 //! warning bug need to fix: ตรวจสอบให้แน่ใจว่าไม่ได้ commit ไฟล์ที่มี Real Keys หรือ Passwords
+appsettings.json
 appsettings.Local.json
 appsettings.Development.json
 .env

@@ -11,8 +11,23 @@ var builder = WebApplication.CreateBuilder(args);
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly(typeof(Program).Assembly.GetName().Name)
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => 
+        {
+            // ระบุ Assembly สำหรับ Migration (ของเดิม)
+            npgsqlOptions.MigrationsAssembly(typeof(Program).Assembly.GetName().Name);
+
+            // สั่งให้ลองใหม่ถ้ายิงไม่เข้า (สูงสุด 5 ครั้ง, รอห่างกันรอบละไม่เกิน 10 วิ)
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorCodesToAdd: null
+            );
+            
+            // เพิ่มเวลา Timeout ให้รอได้นานขึ้น 
+            npgsqlOptions.CommandTimeout(60); 
+        }
     ));
 
 // Add services to the container.
@@ -23,7 +38,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IIkigaiResultRepository, IkigaiResultRepository>();
 builder.Services.AddScoped<IIkigaiService, IkigaiService>();
+builder.Services.AddHttpClient("n8nClient", (serviceProvider, client) =>
+{
+    var config = serviceProvider.GetRequiredService<IConfiguration>();
+    var apiKey = config["N8nIntegration:ApiKey"];
+
+    if (!string.IsNullOrEmpty(apiKey))
+    {
+        client.DefaultRequestHeaders.Add("x-api-key", apiKey);
+    }
+    client.Timeout = TimeSpan.FromMinutes(10);
+});
 
 var allowedOrigins = builder.Configuration
     .GetSection("CorsSettings:AllowedOrigins")
@@ -33,7 +60,6 @@ var sanitizedOrigins = allowedOrigins?.Select(o => o.TrimEnd('/')).ToArray();
 
 if (allowedOrigins == null || allowedOrigins.Length == 0)
 {
-    Console.WriteLine("Warning: No CORS origins configured!");
     allowedOrigins = new string[] { };
 }
 
@@ -62,7 +88,7 @@ else
 {
     // In production, explicitly specify allowed origins and allow credentials only for those.
     app.UseCors(x => x
-        .WithOrigins(sanitizedOrigins)
+        .WithOrigins(sanitizedOrigins ?? Array.Empty<string>())
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowCredentials());

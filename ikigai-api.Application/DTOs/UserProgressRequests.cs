@@ -1,13 +1,11 @@
 namespace ikigai_api.Application.DTOs
 {
-    // 1. Prologue Request
     public class SavePrologueRequest
     {
         public string PlayerName { get; set; } = string.Empty;
         public List<string> SelectedReasons { get; set; } = new();
     }
 
-    // 2. Love Session Request
     public class SaveLoveSessionRequest
     {
         public Guid UserId { get; set; }
@@ -45,4 +43,5 @@ namespace ikigai_api.Application.DTOs
         public List<string> SelectedJobCards { get; set; } = new();
         public string MonetizableExperience { get; set; } = string.Empty;
     }
+
 }
