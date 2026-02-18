@@ -28,7 +28,7 @@ namespace MyThesis.API.Controllers
             return Ok(new
             {
                 message = "Prologue progress saved successfully.",
-                userId = userId
+                userId
             });
         }
 
