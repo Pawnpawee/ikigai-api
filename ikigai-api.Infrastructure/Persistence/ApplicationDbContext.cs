@@ -62,10 +62,6 @@ namespace ikigai_api.Infrastructure.Persistence
                 .WithOne(s => s.Result)
                 .HasForeignKey(s => s.ResultId);
 
-            modelBuilder.Entity<IkigaiResult>()
-            .Property(e => e.GeneratedAt)
-            .HasColumnType("timestamp without time zone"); // หรือ timestamptz
-
         }
     }
 }

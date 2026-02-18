@@ -214,14 +214,16 @@ public class IkigaiService : IIkigaiService
         // Check Existing Completed Result 
         // -------------------------------------------------------------------------
 
-        var existingResult = await _resultRepo.FindAsync(x => x.UserId == userId && x.Status == ProcessStatus.Completed);
+        var existingResult = await _resultRepo.FindAsync(x =>
+        x.UserId == userId &&
+        (x.Status == ProcessStatus.Completed || x.Status == ProcessStatus.Pending));
 
         if (existingResult != null)
         {
             return new IkigaiStartResult
             {
                 ProcessId = existingResult.Id,
-                Status = ProcessStatus.Completed,
+                Status = existingResult.Status,
                 IsExisting = true
             };
         }
@@ -296,13 +298,39 @@ public class IkigaiService : IIkigaiService
             IkigaiSummaries = new List<IkigaiSummary>()
         };
 
-        await _resultRepo.AddAsync(resultEntity);
-        await _resultRepo.SaveChangesAsync();
+        try
+        {
+            await _resultRepo.AddAsync(resultEntity);
+            await _resultRepo.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error saving initial result: {ex.Message}");
 
-        _ = Task.Run(async () =>
+            var raceResult = await _resultRepo.FindAsync(x => x.UserId == userId && x.Status == ProcessStatus.Pending);
+            if (raceResult != null)
+            {
+                return new IkigaiStartResult
+                {
+                    ProcessId = raceResult.Id,
+                    Status = ProcessStatus.Pending,
+                    IsExisting = true
+                };
+            }
+
+            throw; // ถ้าไม่ใช่เรื่องข้อมูลซ้ำ ให้ throw error ปกติ
+        }
+
+        // Fire and Forget
+        // เรียกหลังจาก Save ลง DB สำเร็จ
+        try
         {
             await ProcessInBackgroundAsync(resultEntity.Id, userId, payload);
-        });
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Background Task Trigger Failed: {ex.Message}");
+        }
 
         return new IkigaiStartResult
         {
@@ -315,9 +343,8 @@ public class IkigaiService : IIkigaiService
     private async Task ProcessInBackgroundAsync(Guid resultId, Guid userId, N8nProcessRequest? payload = null)
     {
         // =========================================================================
-        // STEP 1: Update Status "Processing"
+        // STEP 1: Update Status "Processing" 
         // =========================================================================
-
         using (var scope = _serviceScopeFactory.CreateScope())
         {
             var repo = scope.ServiceProvider.GetRequiredService<IIkigaiResultRepository>();
@@ -327,33 +354,81 @@ public class IkigaiService : IIkigaiService
             {
                 entity.Status = ProcessStatus.Processing;
                 await repo.SaveChangesAsync();
-
             }
-
         }
 
-        // ตัวแปรสำหรับรับผลลัพธ์จาก n8n
-        N8nProcessResponse? n8nResult = null;
         string? errorMessage = null;
+        N8nProcessResponse? n8nResult = null;
+        bool isSuccess = false;
 
-        // -------------------------------------------------------------------------
-        // STEP 2: Call External API (n8n) 
-        // -------------------------------------------------------------------------
+        // =========================================================================
+        // STEP 2: Main Logic (API Call + Business Logic)
+        // =========================================================================
         try
         {
-            // สร้าง HttpClient แบบชั่วคราว (หรือจะ Inject ผ่าน Constructor หลักก็ได้)
+            // 2.1 Call External API
             using (var httpClient = _httpClientFactory.CreateClient("n8nClient"))
             {
                 var response = await httpClient.PostAsJsonAsync(_n8nWebhookUrl, payload);
-                response.EnsureSuccessStatusCode();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"n8n API failed with status: {response.StatusCode}");
+                }
 
                 var rawString = await response.Content.ReadAsStringAsync();
-                
-                // Deserialize
                 var n8nList = rawString.FromJsonThai<List<N8nProcessResponse>>();
                 n8nResult = n8nList?.FirstOrDefault();
 
-                if (n8nResult == null) throw new Exception("n8n returned empty result");
+                if (n8nResult == null) throw new Exception("n8n returned empty result or invalid JSON");
+            }
+
+            // 2.2 Save Success Result
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var resultRepo = scope.ServiceProvider.GetRequiredService<IIkigaiResultRepository>();
+                var summaryRepo = scope.ServiceProvider.GetRequiredService<IGenericRepository<IkigaiSummary>>();
+
+                var entity = await resultRepo.GetByIdWithDetailsAsync(resultId);
+
+                if (entity != null && n8nResult.IkigaiAnalysis != null)
+                {
+
+                    entity.Status = ProcessStatus.Completed;
+                    entity.GeneratedAt = DateTime.UtcNow.ToThaiTime();
+
+                    var analysis = n8nResult.IkigaiAnalysis;
+                    var summariesToAdd = new List<IkigaiSummary>();
+
+                    void PrepareData(string type, ComponentResultDto? dto)
+                    {
+                        if (dto == null) return;
+                        summariesToAdd.Add(new IkigaiSummary
+                        {
+                            Id = Guid.NewGuid(),
+                            ResultId = entity.Id,
+                            ComponentType = type,
+                            OverallSummary = dto.OverallSummary ?? "",
+                            ShortSummary = dto.ShortSummary,
+                            StrengthsJson = dto.Strengths.ToJsonThai(),
+                            DevelopmentPointsJson = dto.DevelopmentPoints.ToJsonThai()
+                        });
+                    }
+
+                    PrepareData("What You Love", analysis?.WhatYouLove);
+                    PrepareData("What You Good At", analysis?.WhatYouGoodAt);
+                    PrepareData("What The World Needs", analysis?.WhatTheWorldNeed);
+                    PrepareData("What You Can Be Paid For", analysis?.WhatYouCanBePaidFor);
+                    PrepareData("Passion", analysis?.Passion);
+                    PrepareData("Mission", analysis?.Mission);
+                    PrepareData("Profession", analysis?.Profession);
+                    PrepareData("Vocation", analysis?.Vocation);
+
+                    await summaryRepo.AddRangeAsync(summariesToAdd);
+                    await resultRepo.SaveChangesAsync();
+
+                    isSuccess = true;
+                }
             }
         }
         catch (Exception ex)
@@ -361,71 +436,38 @@ public class IkigaiService : IIkigaiService
             errorMessage = ex.Message;
         }
 
-        // -------------------------------------------------------------------------
-        // STEP 2: Save Result (Upsert Strategy)
-        // -------------------------------------------------------------------------
-        using (var scope = _serviceScopeFactory.CreateScope())
+        // =========================================================================
+        // STEP 3: Final Error Handling (The "Safety Net")
+        // =========================================================================
+
+        if (!isSuccess)
         {
-            var resultRepo = scope.ServiceProvider.GetRequiredService<IIkigaiResultRepository>();
-            var summaryRepo = scope.ServiceProvider.GetRequiredService<IGenericRepository<IkigaiSummary>>();
-
-
-            var entity = await resultRepo.GetByIdWithDetailsAsync(resultId);
-
-            if (entity != null && n8nResult != null && n8nResult.IkigaiAnalysis != null)
+            using (var scope = _serviceScopeFactory.CreateScope())
             {
                 try
                 {
-                    // อัปเดตสถานะตัวแม่
-                    entity.Status = ProcessStatus.Completed;
-                    entity.GeneratedAt = DateTime.UtcNow.ToThaiTime();
+                    var repo = scope.ServiceProvider.GetRequiredService<IIkigaiResultRepository>();
 
-                    if (n8nResult != null)
+                    var entity = await repo.GetByIdAsync(resultId);
+
+                    if (entity != null)
                     {
-                        var analysis = n8nResult.IkigaiAnalysis;
+                        entity.Status = ProcessStatus.Failed;
+                        entity.ErrorMessage = errorMessage;
 
-                        var summariesToAdd = new List<IkigaiSummary>();
-
-                        void PrepareData(string type, ComponentResultDto? dto)
-                        {
-                            if (dto == null) return;
-                            summariesToAdd.Add(new IkigaiSummary
-                            {
-                                Id = Guid.NewGuid(),
-                                ResultId = entity.Id,
-                                ComponentType = type,
-                                OverallSummary = dto.OverallSummary ?? "",
-                                ShortSummary = dto.ShortSummary,
-                                StrengthsJson = dto.Strengths.ToJsonThai(),
-                                DevelopmentPointsJson = dto.DevelopmentPoints.ToJsonThai()
-                            });
-                        }
-
-                        PrepareData("What You Love", analysis?.WhatYouLove);
-                        PrepareData("What You Good At", analysis?.WhatYouGoodAt);
-                        PrepareData("What The World Needs", analysis?.WhatTheWorldNeed);
-                        PrepareData("What You Can Be Paid For", analysis?.WhatYouCanBePaidFor);
-                        PrepareData("Passion", analysis?.Passion);
-                        PrepareData("Mission", analysis?.Mission);
-                        PrepareData("Profession", analysis?.Profession);
-                        PrepareData("Vocation", analysis?.Vocation);
-
-                        await summaryRepo.AddRangeAsync(summariesToAdd);
+                        await repo.SaveChangesAsync();
                     }
-
-                    await resultRepo.SaveChangesAsync();
                 }
-                catch (Exception ex)
+                catch (Exception finalEx)
                 {
-                    errorMessage = ex.Message;
+                    Console.WriteLine($"Critical failure updating status: {finalEx.Message}");
                 }
             }
         }
     }
-
     public async Task<IkigaiResult?> GetProcessStatusAsync(Guid id)
     {
-        return await _resultRepo.GetResultWithDetailsAsync(id);
+        return await _resultRepo.GetByIdWithSummariesAsync(id);
     }
 
     private List<string> DeserializeToList(string jsonString)
@@ -443,6 +485,6 @@ public class IkigaiService : IIkigaiService
 
     public async Task<IkigaiResult?> GetIkigaiResultAsync(Guid userId)
     {
-        return await _resultRepo.GetResultWithDetailsAsync(userId);
+        return await _resultRepo.GetByIdWithSummariesAsync(userId);
     }
 }

@@ -1,8 +1,10 @@
 
 using ikigai_api.Domain.Entities;
+using ikigai_api.Domain.Interfaces;
 using ikigai_api.Infrastructure.Persistence;
-using ikigai_api.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+
+namespace ikigai_api.Infrastructure.Repositories;
 
 public class IkigaiResultRepository : GenericRepository<IkigaiResult>, IIkigaiResultRepository
 {
@@ -13,11 +15,12 @@ public class IkigaiResultRepository : GenericRepository<IkigaiResult>, IIkigaiRe
         _context = context;
     }
 
-    public async Task<IkigaiResult?> GetResultWithDetailsAsync(Guid processId) 
+    public async Task<IkigaiResult?> GetByIdWithSummariesAsync(Guid id)
     {
         return await _context.Set<IkigaiResult>()
+            .AsNoTracking()
             .Include(x => x.IkigaiSummaries)
-            .FirstOrDefaultAsync(x => x.Id == processId);
+            .FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public async Task<IkigaiResult?> GetByIdWithDetailsAsync(Guid id)
