@@ -39,7 +39,7 @@ namespace ikigai_api.API.Controllers
                 return Ok(new
                 {
                     processId = result.ProcessId,
-                    status = result.Status.ToString()
+                    status = result.Status.ToString(),
                 });
             }
 
@@ -48,7 +48,7 @@ namespace ikigai_api.API.Controllers
             return Accepted(new
             {
                 processId = result.ProcessId,
-                status = result.Status.ToString()
+                status = result.Status.ToString(),
             });
         }
 
@@ -72,7 +72,14 @@ namespace ikigai_api.API.Controllers
                         Strengths = s.StrengthsJson.FromJsonThai<List<string>>(),
                         DevelopmentPoints = s.DevelopmentPointsJson.FromJsonThai<List<string>>()
 
-                    }).ToList()
+                    }).ToList(),
+                    Scores = new IkigaiScoreResultDto
+                    {
+                        LoveScore = new ScoreDetail { Percentage = result.LovePercentage },
+                        GoodAtScore = new ScoreDetail { Percentage = result.GoodAtPercentage },
+                        WorldNeedsScore = new ScoreDetail { Percentage = result.WorldNeedsPercentage },
+                        PaidForScore = new ScoreDetail { Percentage = result.PaidForPercentage }
+                    }
                 };
                 return Ok(response);
             }

@@ -8,6 +8,7 @@ namespace ikigai_api.Application.DTOs
         public Guid Id { get; set; }
         public string? Status { get; set; }
         public List<IkigaiSummaryDto>? Summaries { get; set; }
+        public IkigaiScoreResultDto? Scores { get; set; }
     }
 
     public class IkigaiSummaryDto
@@ -24,6 +25,21 @@ namespace ikigai_api.Application.DTOs
         public Guid ProcessId { get; set; }
         public ProcessStatus Status { get; set; }
         public bool IsExisting { get; set; } // ไว้เช็คว่าเป็นการเริ่มใหม่หรือของเก่า
+
+    }
+
+    public class IkigaiScoreResultDto
+    {
+        public ScoreDetail LoveScore { get; set; } = new();
+        public ScoreDetail GoodAtScore { get; set; } = new();
+        public ScoreDetail WorldNeedsScore { get; set; } = new();
+        public ScoreDetail PaidForScore { get; set; } = new();
+    }
+
+    public class ScoreDetail
+    {
+        public double RawScore { get; set; }
+        public double Percentage { get; set; }
     }
 }
 

@@ -14,6 +14,10 @@ namespace ikigai_api.Domain.Entities
         public Guid UserId { get; set; }
         public virtual User? User { get; set; }
         public ProcessStatus Status { get; set; } = ProcessStatus.Pending;
+        public double LovePercentage { get; set; }
+        public double GoodAtPercentage { get; set; }
+        public double WorldNeedsPercentage { get; set; }
+        public double PaidForPercentage { get; set; }
         public string? ErrorMessage { get; set; }
 
         public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;

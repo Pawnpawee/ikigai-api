@@ -24,6 +24,7 @@ public class IkigaiService : IIkigaiService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _n8nWebhookUrl;
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly IIkigaiScoreService _scoreService;
 
     public IkigaiService(
         IGenericRepository<User> userRepo,
@@ -36,7 +37,8 @@ public class IkigaiService : IIkigaiService
         IIkigaiResultRepository resultRepo,
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
-        IServiceScopeFactory serviceScopeFactory)
+        IServiceScopeFactory serviceScopeFactory,
+        IIkigaiScoreService scoreService)
     {
         _userRepo = userRepo;
         _prologueRepo = prologueRepo;
@@ -46,6 +48,7 @@ public class IkigaiService : IIkigaiService
         _paidRepo = paidRepo;
         _resultRepo = resultRepo;
         _ikigaiSummaryRepo = ikigaiSummaryRepo;
+        _scoreService = scoreService;
         _httpClientFactory = httpClientFactory;
         _n8nWebhookUrl = configuration["N8nIntegration:WebhookUrl"]
                                  ?? throw new ArgumentNullException("N8n Webhook URL is not configured in appsettings.json");
@@ -216,7 +219,7 @@ public class IkigaiService : IIkigaiService
 
         var existingResult = await _resultRepo.FindAsync(x =>
         x.UserId == userId &&
-        (x.Status == ProcessStatus.Completed || x.Status == ProcessStatus.Pending));
+        (x.Status == ProcessStatus.Completed || x.Status == ProcessStatus.Processing));
 
         if (existingResult != null)
         {
@@ -224,7 +227,7 @@ public class IkigaiService : IIkigaiService
             {
                 ProcessId = existingResult.Id,
                 Status = existingResult.Status,
-                IsExisting = true
+                IsExisting = true,
             };
         }
 
@@ -242,6 +245,9 @@ public class IkigaiService : IIkigaiService
         {
             throw new InvalidOperationException("Incomplete session data. Please complete all sessions.");
         }
+
+        // คำนวณคะแนนจาก Service
+        var calculatedScores = _scoreService.CalculateScores(love, skill, world, paid);
 
         //เตรียม Payload ส่ง n8n
         var payload = new N8nProcessRequest
@@ -294,6 +300,10 @@ public class IkigaiService : IIkigaiService
             Id = Guid.NewGuid(),
             UserId = userId,
             Status = ProcessStatus.Pending,
+            LovePercentage = calculatedScores.LoveScore.Percentage,
+            GoodAtPercentage = calculatedScores.GoodAtScore.Percentage,
+            WorldNeedsPercentage = calculatedScores.WorldNeedsScore.Percentage,
+            PaidForPercentage = calculatedScores.PaidForScore.Percentage,
             GeneratedAt = DateTime.UtcNow.ToThaiTime(),
             IkigaiSummaries = new List<IkigaiSummary>()
         };
@@ -336,7 +346,7 @@ public class IkigaiService : IIkigaiService
         {
             ProcessId = resultEntity.Id,
             Status = ProcessStatus.Pending,
-            IsExisting = false
+            IsExisting = false,
         };
     }
 

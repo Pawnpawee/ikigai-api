@@ -5,6 +5,7 @@ using ikigai_api.Domain.Interfaces;
 using ikigai_api.Infrastructure.Repositories;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using ikigai_api.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IIkigaiResultRepository, IkigaiResultRepository>();
 builder.Services.AddScoped<IIkigaiService, IkigaiService>();
+builder.Services.AddScoped<IIkigaiScoreService, IkigaiScoreService>();
 builder.Services.AddHttpClient("n8nClient", (serviceProvider, client) =>
 {
     var config = serviceProvider.GetRequiredService<IConfiguration>();
