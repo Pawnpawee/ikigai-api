@@ -9,6 +9,7 @@ namespace ikigai_api.Application.DTOs
         public string? Status { get; set; }
         public List<IkigaiSummaryDto>? Summaries { get; set; }
         public IkigaiScoreResultDto? Scores { get; set; }
+        public double PlayersInSessionPct { get; set; }
     }
 
     public class IkigaiSummaryDto
@@ -34,6 +35,7 @@ namespace ikigai_api.Application.DTOs
         public ScoreDetail GoodAtScore { get; set; } = new();
         public ScoreDetail WorldNeedsScore { get; set; } = new();
         public ScoreDetail PaidForScore { get; set; } = new();
+        
     }
 
     public class ScoreDetail

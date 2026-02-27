@@ -37,7 +37,7 @@ namespace ikigai_api.Infrastructure.Repositories
 
         public void Update(T entity)
         {
-            _context.Set<T>().Update(entity);
+            _context.Entry(entity).State = EntityState.Modified;
         }
 
         public void Delete(T entity)
@@ -58,6 +58,11 @@ namespace ikigai_api.Infrastructure.Repositories
         public async Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> predicate)
         {
             return await _dbSet.Where(predicate).ToListAsync();
+        }
+
+        public Task<int> CountAsync(Expression<Func<T, bool>> predicate)
+        {
+            return _dbSet.CountAsync(predicate);
         }
     }
 }

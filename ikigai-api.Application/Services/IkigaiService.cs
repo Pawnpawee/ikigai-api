@@ -304,43 +304,29 @@ public class IkigaiService : IIkigaiService
             GoodAtPercentage = calculatedScores.GoodAtScore.Percentage,
             WorldNeedsPercentage = calculatedScores.WorldNeedsScore.Percentage,
             PaidForPercentage = calculatedScores.PaidForScore.Percentage,
+            MaxSessionPercentage = GetMaxSessionType(calculatedScores),
             GeneratedAt = DateTime.UtcNow.ToThaiTime(),
             IkigaiSummaries = new List<IkigaiSummary>()
         };
 
-        try
-        {
-            await _resultRepo.AddAsync(resultEntity);
-            await _resultRepo.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error saving initial result: {ex.Message}");
 
-            var raceResult = await _resultRepo.FindAsync(x => x.UserId == userId && x.Status == ProcessStatus.Pending);
-            if (raceResult != null)
-            {
-                return new IkigaiStartResult
-                {
-                    ProcessId = raceResult.Id,
-                    Status = ProcessStatus.Pending,
-                    IsExisting = true
-                };
-            }
+        await _resultRepo.AddAsync(resultEntity);
+        await _resultRepo.SaveChangesAsync();
 
-            throw; // ถ้าไม่ใช่เรื่องข้อมูลซ้ำ ให้ throw error ปกติ
-        }
 
         // Fire and Forget
         // เรียกหลังจาก Save ลง DB สำเร็จ
-        try
+        _ = Task.Run(async () =>
         {
-            await ProcessInBackgroundAsync(resultEntity.Id, userId, payload);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Background Task Trigger Failed: {ex.Message}");
-        }
+            try
+            {
+                await ProcessInBackgroundAsync(resultEntity.Id, userId, payload);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Background processing failed: {ex.Message}");
+            }
+        });
 
         return new IkigaiStartResult
         {
@@ -348,6 +334,28 @@ public class IkigaiService : IIkigaiService
             Status = ProcessStatus.Pending,
             IsExisting = false,
         };
+    }
+
+    private string GetMaxSessionType(IkigaiScoreResultDto scores)
+    {
+        var dict = new Dictionary<string, double>
+        {
+            { "LovePercentage", scores.LoveScore.Percentage },
+            { "GoodAtPercentage", scores.GoodAtScore.Percentage },
+            { "WorldNeedsPercentage", scores.WorldNeedsScore.Percentage },
+            { "PaidForPercentage", scores.PaidForScore.Percentage },
+        };
+ 
+        double maxValue = dict.Values.Max();
+
+        var topCategories = dict.Where(kv => kv.Value == maxValue).ToList();
+
+        if (topCategories.Count > 1)
+        {
+            return "SamePercentage";
+        }
+
+        return topCategories.First().Key;
     }
 
     private async Task ProcessInBackgroundAsync(Guid resultId, Guid userId, N8nProcessRequest? payload = null)
@@ -399,7 +407,7 @@ public class IkigaiService : IIkigaiService
                 var resultRepo = scope.ServiceProvider.GetRequiredService<IIkigaiResultRepository>();
                 var summaryRepo = scope.ServiceProvider.GetRequiredService<IGenericRepository<IkigaiSummary>>();
 
-                var entity = await resultRepo.GetByIdWithDetailsAsync(resultId);
+                var entity = await resultRepo.GetByIdWithSummariesAsync(resultId);
 
                 if (entity != null && n8nResult.IkigaiAnalysis != null)
                 {
@@ -487,14 +495,27 @@ public class IkigaiService : IIkigaiService
         {
             return JsonSerializer.Deserialize<List<string>>(jsonString) ?? new List<string>();
         }
-        catch
+        catch (Exception ex)
         {
-            return new List<string>(); // กัน Error กรณี JSON พัง
+            Console.WriteLine($"Failed to deserialize JSON to List<string>: {ex.Message}");
         }
+        return new List<string>();
     }
 
-    public async Task<IkigaiResult?> GetIkigaiResultAsync(Guid userId)
+    public async Task<double> GetPercentageOfAllPlayersAsync(string maxSession)
     {
-        return await _resultRepo.GetByIdWithSummariesAsync(userId);
+        if (string.IsNullOrEmpty(maxSession)) return 0.0;
+
+        var countAllPlayer = await _resultRepo.CountAsync(r => r.Status == ProcessStatus.Completed);
+
+        var countInSession = await _resultRepo.CountAsync(r =>
+            r.MaxSessionPercentage == maxSession &&
+            r.Status == ProcessStatus.Completed);
+
+        if (countAllPlayer == 0) return 0.0;
+
+        double finalPct = ((double)countInSession / countAllPlayer) * 100;
+
+        return Math.Round(finalPct, 2);
     }
 }

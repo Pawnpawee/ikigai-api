@@ -22,11 +22,4 @@ public class IkigaiResultRepository : GenericRepository<IkigaiResult>, IIkigaiRe
             .Include(x => x.IkigaiSummaries)
             .FirstOrDefaultAsync(x => x.Id == id);
     }
-
-    public async Task<IkigaiResult?> GetByIdWithDetailsAsync(Guid id)
-    {
-        return await _context.Set<IkigaiResult>()
-            .Include(x => x.IkigaiSummaries) 
-            .FirstOrDefaultAsync(x => x.Id == id);
-    }
 }

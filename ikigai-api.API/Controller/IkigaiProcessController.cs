@@ -18,15 +18,6 @@ namespace ikigai_api.API.Controllers
             _ikigaiService = ikigaiService;
         }
 
-        [HttpGet("result/{userId}")]
-        public async Task<IActionResult> GetResult(Guid userId)
-        {
-            var result = await _ikigaiService.GetIkigaiResultAsync(userId);
-            if (result == null) return NotFound(new { message = "Result not found" });
-
-            return Ok(result);
-        }
-
         [HttpPost("generate/{userId}")]
         public async Task<IActionResult> GenerateIkigai(Guid userId)
         {
@@ -56,7 +47,10 @@ namespace ikigai_api.API.Controllers
         public async Task<IActionResult> GetStatus(Guid processId)
         {
             var result = await _ikigaiService.GetProcessStatusAsync(processId);
+
             if (result == null) return NotFound();
+
+            var playersInSessionPct = await _ikigaiService.GetPercentageOfAllPlayersAsync(result.MaxSessionPercentage ?? string.Empty);
 
             if (result.Status == ProcessStatus.Completed)
             {
@@ -78,8 +72,9 @@ namespace ikigai_api.API.Controllers
                         LoveScore = new ScoreDetail { Percentage = result.LovePercentage },
                         GoodAtScore = new ScoreDetail { Percentage = result.GoodAtPercentage },
                         WorldNeedsScore = new ScoreDetail { Percentage = result.WorldNeedsPercentage },
-                        PaidForScore = new ScoreDetail { Percentage = result.PaidForPercentage }
-                    }
+                        PaidForScore = new ScoreDetail { Percentage = result.PaidForPercentage },
+                    },
+                    PlayersInSessionPct = playersInSessionPct
                 };
                 return Ok(response);
             }

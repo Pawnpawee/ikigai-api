@@ -20,6 +20,8 @@ namespace ikigai_api.Domain.Interfaces
         // หาตามเงื่อนไข
         Task<T?> FindAsync(Expression<Func<T, bool>> predicate);
         Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> predicate);
-        
+        Task<int> CountAsync(Expression<Func<T, bool>> predicate);
+
+
     }
 }

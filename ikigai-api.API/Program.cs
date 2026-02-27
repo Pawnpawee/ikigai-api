@@ -51,7 +51,6 @@ builder.Services.AddHttpClient("n8nClient", (serviceProvider, client) =>
     {
         client.DefaultRequestHeaders.Add("x-api-key", apiKey);
     }
-    client.Timeout = TimeSpan.FromMinutes(10);
 });
 
 var allowedOrigins = builder.Configuration

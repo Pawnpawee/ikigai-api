@@ -18,6 +18,7 @@ namespace ikigai_api.Domain.Entities
         public double GoodAtPercentage { get; set; }
         public double WorldNeedsPercentage { get; set; }
         public double PaidForPercentage { get; set; }
+        public string? MaxSessionPercentage { get; set; }
         public string? ErrorMessage { get; set; }
 
         public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;

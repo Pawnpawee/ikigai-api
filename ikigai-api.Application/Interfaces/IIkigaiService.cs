@@ -13,7 +13,7 @@ namespace ikigai_api.Application.Interfaces
         Task SavePaidSessionAsync(SavePaidSessionRequest request);
         Task<IkigaiStartResult> StartIkigaiProcessingAsync(Guid userId);
         Task<IkigaiResult?> GetProcessStatusAsync(Guid id);
-        Task<IkigaiResult?> GetIkigaiResultAsync(Guid userId);
+        Task<double> GetPercentageOfAllPlayersAsync(string componentType);
 
     }
 }
