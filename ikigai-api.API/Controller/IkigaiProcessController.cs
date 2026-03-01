@@ -74,6 +74,7 @@ namespace ikigai_api.API.Controllers
                         WorldNeedsScore = new ScoreDetail { Percentage = result.WorldNeedsPercentage },
                         PaidForScore = new ScoreDetail { Percentage = result.PaidForPercentage },
                     },
+                    MaxSessionPercentage = result.MaxSessionPercentage,
                     PlayersInSessionPct = playersInSessionPct
                 };
                 return Ok(response);

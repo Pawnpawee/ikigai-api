@@ -10,6 +10,7 @@ namespace ikigai_api.Application.DTOs
         public List<IkigaiSummaryDto>? Summaries { get; set; }
         public IkigaiScoreResultDto? Scores { get; set; }
         public double PlayersInSessionPct { get; set; }
+        public string? MaxSessionPercentage { get; set; }
     }
 
     public class IkigaiSummaryDto
