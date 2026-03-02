@@ -443,6 +443,7 @@ public class IkigaiService : IIkigaiService
                     PrepareData("Vocation", analysis?.Vocation);
 
                     await summaryRepo.AddRangeAsync(summariesToAdd);
+                    resultRepo.Update(entity);
                     await resultRepo.SaveChangesAsync();
 
                     isSuccess = true;
