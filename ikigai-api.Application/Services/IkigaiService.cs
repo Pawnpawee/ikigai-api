@@ -96,10 +96,10 @@ public class IkigaiService : IIkigaiService
         {
             throw new ArgumentException("User ID is required.");
         }
-        // Validation: ตรวจสอบว่ามี 3 อันจริงไหม
-        if (request.TopThreeHobbies.Count != 3)
+        // Validation
+        if (request.TopThreeHobbies.Count < 1)
         {
-            throw new ArgumentException("Top three hobbies must contain exactly 3 items.");
+            throw new ArgumentException("Hobbies must contain atleast 1 items.");
         }
 
         var loveData = new LoveSessionData
