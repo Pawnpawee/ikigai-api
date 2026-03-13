@@ -40,6 +40,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IIkigaiResultRepository, IkigaiResultRepository>();
+builder.Services.AddSingleton<ISseManager, SseManager>();
 builder.Services.AddScoped<IIkigaiService, IkigaiService>();
 builder.Services.AddScoped<IIkigaiScoreService, IkigaiScoreService>();
 builder.Services.AddHttpClient("n8nClient", (serviceProvider, client) =>
