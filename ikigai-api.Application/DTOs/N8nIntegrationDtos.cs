@@ -5,6 +5,9 @@ namespace ikigai_api.Application.DTOs
 {
     public class N8nProcessRequest
     {
+        [JsonPropertyName("processId")]
+        public Guid ProcessId { get; set; }
+
         [JsonPropertyName("userId")]
         public Guid UserId { get; set; }
 
@@ -105,6 +108,12 @@ namespace ikigai_api.Application.DTOs
         public required IkigaiAnalysisDto IkigaiAnalysis { get; set; }
     }
 
+    public class N8nUpdatePayload
+    {
+        public string ProcessId { get; set; } = string.Empty;
+        public int Progress { get; set; }
+        public object? Result { get; set; }
+    }
     public class IkigaiAnalysisDto
     {
         // --- 1. The 4 Circles ---

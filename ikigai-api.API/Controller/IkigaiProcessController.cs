@@ -12,81 +12,86 @@ namespace ikigai_api.API.Controllers
     public class IkigaiProcessController : ControllerBase
     {
         private readonly IIkigaiService _ikigaiService;
+        private readonly ISseManager _sseManager;
 
-        public IkigaiProcessController(IIkigaiService ikigaiService)
+        public IkigaiProcessController(IIkigaiService ikigaiService, ISseManager sseManager)
         {
             _ikigaiService = ikigaiService;
+            _sseManager = sseManager;
         }
 
         [HttpPost("generate/{userId}")]
-        public async Task<IActionResult> GenerateIkigai(Guid userId)
+        public async Task<IActionResult> StartIkigaiProcessing(Guid userId)
         {
-            var result = await _ikigaiService.StartIkigaiProcessingAsync(userId);
-
-            //? Case 1: ถ้าเป็นงานที่เสร็จอยู่แล้ว (Existing Completed)
-            if (result.IsExisting || result.Status == ProcessStatus.Completed)
+            try
             {
-                // Return 200 OK พร้อมบอก Frontend ว่าเสร็จแล้วนะ ไปดึงข้อมูลได้เลย
+                // เรียก Service ให้เริ่มงาน และรับ processId กลับมา
+                var processId = await _ikigaiService.GenerateIkigaiAsync(userId);
+
+                // คืนค่า processId กลับไปให้ Frontend (Next.js) เพื่อเอาไปใช้เปิดท่อ SSE
                 return Ok(new
                 {
-                    processId = result.ProcessId,
-                    status = result.Status.ToString(),
+                    message = "Ikigai processing started.",
+                    processId = processId
                 });
             }
-
-            //? Case 2: ถ้าเพิ่งเริ่มทำ (New Job)
-            // Return 202 Accepted (รับเรื่องไว้แล้ว กำลังทำ)
-            return Accepted(new
+            catch (Exception ex)
             {
-                processId = result.ProcessId,
-                status = result.Status.ToString(),
-            });
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+        
+        [HttpGet("stream/{processId}")]
+        public async Task StreamFromN8n(string processId)
+        {
+            Response.Headers["Content-Type"] = "text/event-stream";
+            Response.Headers["Cache-Control"] = "no-cache";
+            Response.Headers["Connection"] = "keep-alive";
+
+            using var writer = new StreamWriter(Response.Body);
+            _sseManager.AddClient(processId, writer);
+
+            try
+            {
+                await Task.Delay(Timeout.Infinite, HttpContext.RequestAborted);
+            }
+            catch (TaskCanceledException) { /* Client ตัดสาย */ }
+            finally { _sseManager.RemoveClient(processId); }
         }
 
-        [HttpGet("status/{processId}")]
-        public async Task<IActionResult> GetStatus(Guid processId)
+        [HttpPost("webhook/update")]
+        public async Task<IActionResult> ReceiveUpdateFromN8n([FromBody] N8nUpdatePayload payload)
         {
-            var result = await _ikigaiService.GetProcessStatusAsync(processId);
-
-            if (result == null) return NotFound();
-
-            var playersInSessionPct = await _ikigaiService.GetPercentageOfAllPlayersAsync(result.MaxSessionPercentage ?? string.Empty);
-
-            if (result.Status == ProcessStatus.Completed)
+            string statusText = payload.Progress switch
             {
-                var response = new IkigaiResultDto
+                10 => "กำลังวิเคราะห์สิ่งที่คุณรัก...",
+                20 => "กำลังวิเคราะห์ประสบการณ์ และค้นหาอาชีพที่เหมาะสำหรับคุณ...",
+                60 => "กำลังวิเคราะห์สิ่งที่คุณทำได้ดี และสิ่งที่โลกต้องการ...",
+                70 => "กำลังวิเคราะห์สิ่งที่คุณสร้างรายได้ได้...",
+                80 => "กำลังวิเคราะห์ \"อิคิไก\" ของคุณ...",
+                100 => "ใกล้เสร็จแล้ว กำลังบันทึกผลลัพธ์...",
+                _ => "กำลังประมวลผลข้อมูล..."
+            };
+
+            IkigaiResultDto? finalDto = null;
+
+            if (payload.Progress == 100 && payload.Result != null)
+            {
+                if (Guid.TryParse(payload.ProcessId, out Guid id))
                 {
-                    Id = result.Id,
-                    Status = result.Status.ToString(),
-                    Summaries = result.IkigaiSummaries.Select(s => new IkigaiSummaryDto
-                    {
-                        ComponentType = s.ComponentType,
-                        OverallSummary = s.OverallSummary,
-                        ShortSummary = s.ShortSummary,
-                        Strengths = s.StrengthsJson.FromJsonThai<List<string>>(),
-                        DevelopmentPoints = s.DevelopmentPointsJson.FromJsonThai<List<string>>()
+                    // รับ DTO ตัวเต็มจาก Service
+                    finalDto = await _ikigaiService.SaveFinalResultAsync(id, payload.Result);
+                }
+            }
 
-                    }).ToList(),
-                    Scores = new IkigaiScoreResultDto
-                    {
-                        LoveScore = new ScoreDetail { Percentage = result.LovePercentage },
-                        GoodAtScore = new ScoreDetail { Percentage = result.GoodAtPercentage },
-                        WorldNeedsScore = new ScoreDetail { Percentage = result.WorldNeedsPercentage },
-                        PaidForScore = new ScoreDetail { Percentage = result.PaidForPercentage },
-                    },
-                    MaxSessionPercentage = result.MaxSessionPercentage,
-                    PlayersInSessionPct = playersInSessionPct
-                };
-                return Ok(response);
-            }
-            else if (result.Status == ProcessStatus.Failed)
+            await _sseManager.SendUpdateAsync(payload.ProcessId, new
             {
-                return BadRequest(new { error = result.ErrorMessage });
-            }
-            else
-            {
-                return Ok(new { status = result.Status.ToString() });
-            }
+                status = statusText,
+                progress = payload.Progress,
+                result = finalDto
+            }, payload.Progress);
+
+            return Ok(new { message = "Update processed successfully" });
         }
     }
 }

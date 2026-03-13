@@ -11,9 +11,10 @@ namespace ikigai_api.Application.Interfaces
         Task SaveSkillSessionAsync(SaveSkillSessionRequest request);
         Task SaveWorldSessionAsync(SaveWorldSessionRequest request);
         Task SavePaidSessionAsync(SavePaidSessionRequest request);
-        Task<IkigaiStartResult> StartIkigaiProcessingAsync(Guid userId);
-        Task<IkigaiResult?> GetProcessStatusAsync(Guid id);
-        Task<double> GetPercentageOfAllPlayersAsync(string componentType);
+        Task<Guid> GenerateIkigaiAsync(Guid userId);
+        Task<IkigaiResultDto?> SaveFinalResultAsync(Guid processId, object resultData);
+        Task<IkigaiResultDto?> GetIkigaiResultAsync(Guid processId);
+        
 
     }
 }
