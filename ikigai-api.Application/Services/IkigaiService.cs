@@ -403,7 +403,7 @@ public class IkigaiService : IIkigaiService
                 }
             }
 
-            await _sseManager.SendUpdateAsync(resultId.ToString(), new
+            await _sseManager.SendUpdateAsync(resultId, new
             {
                 status = "Error",
                 progress = -1,
@@ -531,7 +531,7 @@ public class IkigaiService : IIkigaiService
             _resultRepo.Update(result);
             await _resultRepo.SaveChangesAsync();
 
-            await _sseManager.SendUpdateAsync(processId.ToString(), new
+            await _sseManager.SendUpdateAsync(processId, new
             {
                 status = "Error",
                 progress = -1,

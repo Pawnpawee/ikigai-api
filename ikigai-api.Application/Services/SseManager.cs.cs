@@ -9,23 +9,23 @@ namespace ikigai_api.Application.Services
         private readonly ConcurrentDictionary<string, StreamWriter> _clients = new();
         private readonly ConcurrentDictionary<string, int> _lastProgress = new(); // กัน Progress ถอยหลัง
 
-        public void AddClient(string processId, StreamWriter writer)
+        public void AddClient(Guid processId, StreamWriter writer)
         {
-            var key = processId.ToLower().Trim();
+            var key = processId.ToString().ToLower().Trim();
             _clients.TryAdd(key, writer);
             _lastProgress.TryAdd(key, 0);
         }
 
-        public void RemoveClient(string processId)
+        public void RemoveClient(Guid processId)
         {
-            var key = processId.ToLower().Trim();
+            var key = processId.ToString().ToLower().Trim();
             _clients.TryRemove(key, out _);
             _lastProgress.TryRemove(key, out _);
         }
 
-        public async Task SendUpdateAsync(string processId, object data, int currentProgress)
+        public async Task SendUpdateAsync(Guid processId, object data, int currentProgress)
         {
-            var key = processId.ToLower().Trim();
+            var key = processId.ToString().ToLower().Trim();
 
             if (_clients.TryGetValue(key, out var writer))
             {
