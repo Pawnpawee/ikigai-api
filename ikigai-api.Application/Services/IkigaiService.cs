@@ -137,18 +137,18 @@ public class IkigaiService : IIkigaiService
             .Concat(request.CustomSoftSkills)
             .ToList();
 
-        if (hardSkills.Count < 2 || softSkills.Count < 3)
+        if (hardSkills.Count < 1 || softSkills.Count < 1)
         {
-            throw new ArgumentException("You must select at least two hard skills and at least three soft skills.");
+            throw new ArgumentException("You must select at least one hard skill and at least one soft skill.");
         }
 
         var skillData = new SkillSessionData
         {
             Id = Guid.NewGuid(),
             UserId = request.UserId,
-            SelectedHardSkills = hardSkills.ToJsonThai(),
+            SelectedHardSkills = request.SelectedHardSkills.ToJsonThai(),
             CustomHardSkills = request.CustomHardSkills.ToJsonThai(),
-            SelectedSoftSkills = softSkills.ToJsonThai(),
+            SelectedSoftSkills = request.SelectedSoftSkills.ToJsonThai(),
             CustomSoftSkills = request.CustomSoftSkills.ToJsonThai(),
             SkillsMatchJob = request.SkillsMatchJob,
             UseSkillsInNewRole = request.UseSkillsInNewRole,
