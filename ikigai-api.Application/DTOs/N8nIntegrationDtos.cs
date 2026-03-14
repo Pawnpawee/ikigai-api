@@ -110,8 +110,11 @@ namespace ikigai_api.Application.DTOs
 
     public class N8nUpdatePayload
     {
+        [JsonPropertyName("processId")]
         public string ProcessId { get; set; } = string.Empty;
+        [JsonPropertyName("progress")]
         public int Progress { get; set; }
+        [JsonPropertyName("result")]
         public object? Result { get; set; }
     }
     public class IkigaiAnalysisDto

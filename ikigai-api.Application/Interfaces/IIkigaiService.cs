@@ -14,7 +14,9 @@ namespace ikigai_api.Application.Interfaces
         Task<Guid> GenerateIkigaiAsync(Guid userId);
         Task<IkigaiResultDto?> SaveFinalResultAsync(Guid processId, object resultData);
         Task<IkigaiResultDto?> GetIkigaiResultAsync(Guid processId);
-        
+        Task<ProcessStatus?> GetStatusOnlyAsync(Guid processId);
+
+
 
     }
 }

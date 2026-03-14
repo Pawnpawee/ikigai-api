@@ -62,17 +62,6 @@ namespace ikigai_api.API.Controllers
         [HttpPost("webhook/update")]
         public async Task<IActionResult> ReceiveUpdateFromN8n([FromBody] N8nUpdatePayload payload)
         {
-            string statusText = payload.Progress switch
-            {
-                10 => "กำลังวิเคราะห์สิ่งที่คุณรัก...",
-                20 => "กำลังวิเคราะห์ประสบการณ์ และค้นหาอาชีพที่เหมาะสำหรับคุณ...",
-                60 => "กำลังวิเคราะห์สิ่งที่คุณทำได้ดี และสิ่งที่โลกต้องการ...",
-                70 => "กำลังวิเคราะห์สิ่งที่คุณสร้างรายได้ได้...",
-                80 => "กำลังวิเคราะห์ \"อิคิไก\" ของคุณ...",
-                100 => "ใกล้เสร็จแล้ว กำลังบันทึกผลลัพธ์...",
-                _ => "กำลังประมวลผลข้อมูล..."
-            };
-
             IkigaiResultDto? finalDto = null;
 
             if (payload.Progress == 100 && payload.Result != null)
@@ -86,7 +75,7 @@ namespace ikigai_api.API.Controllers
 
             await _sseManager.SendUpdateAsync(payload.ProcessId, new
             {
-                status = statusText,
+                status = payload.Progress,
                 progress = payload.Progress,
                 result = finalDto
             }, payload.Progress);

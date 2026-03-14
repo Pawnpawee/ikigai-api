@@ -577,4 +577,13 @@ public class IkigaiService : IIkigaiService
             PlayersInSessionPct = playersInSessionPct
         };
     }
+
+    public async Task<ProcessStatus?> GetStatusOnlyAsync(Guid processId)
+    {
+        // ดึงเฉพาะ Entity มาดู Status (ไม่ต้อง Include ตารางอื่น)
+        var result = await _resultRepo.GetByIdAsync(processId);
+
+        // คืนค่า Status กลับไป (ถ้าไม่เจอเลยจะคืน null)
+        return result?.Status;
+    }
 }
