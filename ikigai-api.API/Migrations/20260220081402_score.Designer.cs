@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ikigai_api.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using ikigai_api.Infrastructure.Persistence;
 namespace ikigai_api.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260220081402_score")]
+    partial class score
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,9 +42,6 @@ namespace ikigai_api.API.Migrations
 
                     b.Property<double>("LovePercentage")
                         .HasColumnType("double precision");
-
-                    b.Property<string>("MaxSessionPercentage")
-                        .HasColumnType("text");
 
                     b.Property<double>("PaidForPercentage")
                         .HasColumnType("double precision");

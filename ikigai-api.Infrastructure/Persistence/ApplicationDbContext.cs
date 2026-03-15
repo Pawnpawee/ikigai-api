@@ -18,14 +18,13 @@ namespace ikigai_api.Infrastructure.Persistence
         public DbSet<PaidSessionData> PaidSessionDatas { get; set; }
         public DbSet<IkigaiResult> IkigaiResults { get; set; }
         public DbSet<IkigaiSummary> IkigaiSummaries { get; set; }
-        public DbSet<DetailedComponentData> DetailedComponentDatas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             //? Config ความสัมพันธ์ (Fluent API) เพื่อความชัวร์
-            
+
             // User 1 : N PrologueData
             modelBuilder.Entity<User>()
                 .HasMany(u => u.PrologueDatas)
@@ -33,29 +32,29 @@ namespace ikigai_api.Infrastructure.Persistence
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade); // ลบ User แล้วข้อมูลหายด้วย
 
-                modelBuilder.Entity<User>()
-                .HasMany(u => u.LoveSessionDatas)
-                .WithOne(p => p.User)
-                .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<User>()
+            .HasMany(u => u.LoveSessionDatas)
+            .WithOne(p => p.User)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-                modelBuilder.Entity<User>()
-                .HasMany(u => u.SkillSessionDatas)
-                .WithOne(p => p.User)
-                .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<User>()
+            .HasMany(u => u.SkillSessionDatas)
+            .WithOne(p => p.User)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-                modelBuilder.Entity<User>()
-                .HasMany(u => u.WorldSessionDatas)
-                .WithOne(p => p.User)
-                .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<User>()
+            .HasMany(u => u.WorldSessionDatas)
+            .WithOne(p => p.User)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-                modelBuilder.Entity<User>()
-                .HasMany(u => u.PaidSessionDatas)
-                .WithOne(p => p.User)
-                .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<User>()
+            .HasMany(u => u.PaidSessionDatas)
+            .WithOne(p => p.User)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
             // IkigaiResult 1 : N IkigaiSummary
             modelBuilder.Entity<IkigaiResult>()
@@ -63,11 +62,6 @@ namespace ikigai_api.Infrastructure.Persistence
                 .WithOne(s => s.Result)
                 .HasForeignKey(s => s.ResultId);
 
-             // IkigaiSummary 1 : 0..1 DetailedComponentData (One-to-One)
-             modelBuilder.Entity<DetailedComponentData>()
-                .HasOne(d => d.IkigaiSummary)
-                .WithOne(s => s.DetailedComponentData)
-                .HasForeignKey<DetailedComponentData>(d => d.IkigaiSummaryId);
         }
     }
 }

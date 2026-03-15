@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ikigai_api.Domain.Interfaces;
 using ikigai_api.Infrastructure.Persistence;
+using System.Linq.Expressions;
 
 namespace ikigai_api.Infrastructure.Repositories
 {
@@ -29,6 +30,10 @@ namespace ikigai_api.Infrastructure.Repositories
         {
             await _dbSet.AddAsync(entity);
         }
+        public async Task AddRangeAsync(IEnumerable<T> entities)
+        {
+            await _dbSet.AddRangeAsync(entities);
+        }
 
         public void Update(T entity)
         {
@@ -43,6 +48,21 @@ namespace ikigai_api.Infrastructure.Repositories
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
+        }
+
+        public async Task<T?> FindAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.FirstOrDefaultAsync(predicate);
+        }
+
+        public async Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.Where(predicate).ToListAsync();
+        }
+
+        public Task<int> CountAsync(Expression<Func<T, bool>> predicate)
+        {
+            return _dbSet.CountAsync(predicate);
         }
     }
 }

@@ -28,7 +28,7 @@ namespace MyThesis.API.Controllers
             return Ok(new
             {
                 message = "Prologue progress saved successfully.",
-                userId = userId
+                userId
             });
         }
 
@@ -103,5 +103,6 @@ namespace MyThesis.API.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+        
     }
 }

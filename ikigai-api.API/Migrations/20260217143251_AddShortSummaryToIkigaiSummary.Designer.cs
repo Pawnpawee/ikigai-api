@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ikigai_api.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using ikigai_api.Infrastructure.Persistence;
 namespace ikigai_api.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260217143251_AddShortSummaryToIkigaiSummary")]
+    partial class AddShortSummaryToIkigaiSummary
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,26 +37,11 @@ namespace ikigai_api.API.Migrations
                     b.Property<DateTime>("GeneratedAt")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<double>("GoodAtPercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("LovePercentage")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("MaxSessionPercentage")
-                        .HasColumnType("text");
-
-                    b.Property<double>("PaidForPercentage")
-                        .HasColumnType("double precision");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
-
-                    b.Property<double>("WorldNeedsPercentage")
-                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
