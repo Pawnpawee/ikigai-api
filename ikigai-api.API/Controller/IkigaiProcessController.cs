@@ -45,50 +45,70 @@ namespace ikigai_api.API.Controllers
         [HttpGet("stream/{processId}")]
         public async Task GetStream(Guid processId)
         {
-            // กำหนด Header ให้เป็นรูปแบบของ Server-Sent Events
             Response.Headers["Content-Type"] = "text/event-stream";
             Response.Headers["Cache-Control"] = "no-cache";
             Response.Headers["Connection"] = "keep-alive";
 
             var writer = new StreamWriter(Response.Body);
-
-            // Add Client เข้าไปใน SseManager ก่อน เพื่อให้พร้อมใช้งาน SendUpdateAsync
             _sseManager.AddClient(processId, writer);
 
             try
             {
-                // 2. ดึงข้อมูลจาก Database ผ่าน Service (เช็คว่ามี Final Data หรือยัง)
-                var existingResult = await _ikigaiService.GetIkigaiResultAsync(processId);
+                // 1. เช็คสถานะปัจจุบันจาก Database ก่อนเป็นอันดับแรก
+                var currentStatus = await _ikigaiService.GetStatusOnlyAsync(processId);
 
-                if (existingResult != null)
+                // 2. ดักจับกรณีที่ประมวลผลล้มเหลวไปแล้ว (ป้องกัน User รอเก้อ)
+                if (currentStatus == ProcessStatus.Failed)
                 {
-                    // 3. ถ้า Process เคยทำเสร็จแล้ว (มีข้อมูล)
-                    // ให้ใช้ SendUpdateAsync ยิงข้อมูลกลับไปทันที ด้วยโครงสร้างที่ Frontend รอ Map (result = existingResult)
                     await _sseManager.SendUpdateAsync(processId, new
                     {
-                        status = "Completed",
-                        progress = 100,
-                        result = existingResult
-                    }, 100);
+                        status = "Error",
+                        progress = -1,
+                        error = "เกิดข้อผิดพลาดในการประมวลผลก่อนหน้านี้ กรุณาลองใหม่อีกครั้ง"
+                    }, -1);
+                    return; 
                 }
 
-                // 4. เปิด Connection ค้างไว้เพื่อรอรับ Update จาก Background Task (n8n)
-                // หรือรอให้ฝั่ง Frontend สั่ง eventSource.close() เมื่อได้รับ progress = 100
+                // 3. กรณีที่ประมวลผลเสร็จสมบูรณ์แล้ว
+                if (currentStatus == ProcessStatus.Completed)
+                {
+                    var existingResult = await _ikigaiService.GetIkigaiResultAsync(processId);
+                    if (existingResult != null)
+                    {
+                        await _sseManager.SendUpdateAsync(processId, new
+                        {
+                            status = "Completed",
+                            progress = 100,
+                            result = existingResult
+                        }, 100);
+                        return; 
+                    }
+                }
+
+                // 4. ส่งสถานะ "เชื่อมต่อสำเร็จ" กลับไปให้ Frontend อุ่นใจ ว่ายัง Processing อยู่นะ
+                if (currentStatus == ProcessStatus.Processing)
+                {
+                    await _sseManager.SendUpdateAsync(processId, new
+                    {
+                        status = "Reconnected",
+                        progress = 0, 
+                        message = "กำลังประมวลผลต่อจากเดิม..."
+                    }, 0);
+                }
+
+                // 5. เปิด Connection ค้างไว้เพื่อรอรับ Update จาก Webhook ของ n8n
                 await Task.Delay(Timeout.Infinite, HttpContext.RequestAborted);
             }
             catch (TaskCanceledException)
             {
-                // จะเข้ามาที่นี่เมื่อ Frontend สั่ง close() หรือ User ปิดหน้าเว็บ
                 Console.WriteLine($"Client disconnected from stream: {processId}");
             }
             finally
             {
-                // 5. ลบ Client ออกเสมอเมื่อจบการทำงาน ป้องกัน Memory Leak
                 _sseManager.RemoveClient(processId);
                 await writer.DisposeAsync();
             }
         }
-
 
         [HttpPost("webhook/update")]
         public async Task<IActionResult> ReceiveUpdateFromN8n([FromBody] N8nUpdatePayload payload)
