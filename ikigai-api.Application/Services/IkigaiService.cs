@@ -342,7 +342,7 @@ public class IkigaiService : IIkigaiService
             { "WorldNeedsPercentage", scores.WorldNeedsScore.Percentage },
             { "PaidForPercentage", scores.PaidForScore.Percentage },
         };
- 
+
         double maxValue = dict.Values.Max();
 
         var topCategories = dict.Where(kv => kv.Value == maxValue).ToList();
@@ -384,7 +384,40 @@ public class IkigaiService : IIkigaiService
                 }
 
             }
+
+            // ถ้ายิง n8n สำเร็จแล้ว ให้ตั้งเวลา Timeout 
+            await Task.Delay(TimeSpan.FromMinutes(3));
+
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var repo = scope.ServiceProvider.GetRequiredService<IIkigaiResultRepository>();
+
+                var entity = await repo.GetByIdAsync(resultId);
+
+                // ตรวจสอบว่า Status ยังติดอยู่ที่ Processing หรือไม่
+                if (entity != null && entity.Status == ProcessStatus.Processing)
+                {
+                    string timeoutMessage = "การประมวลผลล้มเหลว: n8n ไม่ตอบกลับภายใน 3 นาที (Timeout)";
+
+                    // บันทึกสถานะ Failed ลง Database
+                    entity.Status = ProcessStatus.Failed;
+                    entity.ErrorMessage = timeoutMessage;
+                    await repo.SaveChangesAsync();
+
+                    // ยิง SSE แจ้งเตือนไปยัง Client
+                    await _sseManager.SendUpdateAsync(resultId, new
+                    {
+                        status = "Error",
+                        progress = -1,
+                        error = timeoutMessage
+                    }, -1);
+
+                    Console.WriteLine($"[Timeout] Process {resultId} marked as Failed.");
+                }
+
+            }
         }
+
         catch (Exception ex)
         {
             string errorMessage = $"Failed to trigger n8n: {ex.Message}";
