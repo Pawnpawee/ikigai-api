@@ -386,7 +386,7 @@ public class IkigaiService : IIkigaiService
             }
 
             // ถ้ายิง n8n สำเร็จแล้ว ให้ตั้งเวลา Timeout 
-            await Task.Delay(TimeSpan.FromMinutes(3));
+            await Task.Delay(TimeSpan.FromMinutes(2));
 
             using (var scope = _serviceScopeFactory.CreateScope())
             {
@@ -397,7 +397,7 @@ public class IkigaiService : IIkigaiService
                 // ตรวจสอบว่า Status ยังติดอยู่ที่ Processing หรือไม่
                 if (entity != null && entity.Status == ProcessStatus.Processing)
                 {
-                    string timeoutMessage = "การประมวลผลล้มเหลว: n8n ไม่ตอบกลับภายใน 3 นาที (Timeout)";
+                    string timeoutMessage = "การประมวลผลล้มเหลว: n8n ไม่ตอบกลับภายใน 2 นาที";
 
                     // บันทึกสถานะ Failed ลง Database
                     entity.Status = ProcessStatus.Failed;
